@@ -29,20 +29,13 @@ namespace VisualizationTopograms
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             if (checkBox1.Checked)
-            { 
                 checkBox2.Checked = false;
-                radioButton1.Checked = true;
-            }
         }
 
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
             if (checkBox2.Checked)
-            {
                 checkBox1.Checked = false;
-                radioButton1.Checked = false;
-                radioButton2.Checked = false;
-            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -65,9 +58,7 @@ namespace VisualizationTopograms
             {
                 if (checkBox1.Checked)
                 {
-                    if (radioButton1.Checked)
-                        view.DrawQuads(currentLayer);
-                    else view.QuadStrip(currentLayer);
+                    view.DrawQuads(currentLayer);
                 }
                 else
                 {

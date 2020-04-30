@@ -155,34 +155,5 @@ namespace VisualizationTopograms
 
             GL.Disable(EnableCap.Texture2D);
         }
-        public void QuadStrip(int layerNumber)
-        {
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.Begin(BeginMode.Quads);
-            short value;
-            for (int x = 0; x < Bin.X - 1; x++)
-            {
-                value = Bin.array[x + layerNumber * Bin.X * Bin.Y];
-                GL.Color3(TransferFunction(value));
-                GL.Vertex2(x, 0);
-
-                for (int y = 0; y < Bin.Y - 1; y++)
-                {
-                    //  добавляем 2 вершины к 4-угольнику
-                    value = Bin.array[x + (y + 1) * Bin.X + layerNumber * Bin.X * Bin.Y];
-                    GL.Color3(TransferFunction(value));
-                    GL.Vertex2(x, y + 1);
-
-                    value = Bin.array[x + 1 + (y + 1) * Bin.X + layerNumber * Bin.X * Bin.Y];
-                    GL.Color3(TransferFunction(value));
-                    GL.Vertex2(x + 1, y + 1);
-                }
-            }
-            value = Bin.array[Bin.X - 1 + layerNumber * Bin.X * Bin.Y];
-            GL.Color3(TransferFunction(value));
-            GL.Vertex2(Bin.X - 1, 0);
-
-            GL.End();
-        }
     }
 }
