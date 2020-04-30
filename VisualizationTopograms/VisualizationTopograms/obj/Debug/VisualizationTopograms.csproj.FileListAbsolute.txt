@@ -1,0 +1,16 @@
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\bin\Debug\VisualizationTopograms.exe.config
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\bin\Debug\VisualizationTopograms.exe
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\bin\Debug\VisualizationTopograms.pdb
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\bin\Debug\OpenTK.dll
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\bin\Debug\OpenTK.GLControl.dll
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\bin\Debug\OpenTK.pdb
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\bin\Debug\OpenTK.xml
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\bin\Debug\OpenTK.dll.config
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\bin\Debug\OpenTK.GLControl.xml
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\obj\Debug\VisualizationTopograms.csprojAssemblyReference.cache
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\obj\Debug\VisualizationTopograms.Form1.resources
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\obj\Debug\VisualizationTopograms.Properties.Resources.resources
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\obj\Debug\VisualizationTopograms.csproj.GenerateResource.cache
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\obj\Debug\VisualizationTopograms.csproj.CopyComplete
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\obj\Debug\VisualizationTopograms.exe
+Z:\projectvs\VisualizationTopograms\VisualizationTopograms\obj\Debug\VisualizationTopograms.pdb
