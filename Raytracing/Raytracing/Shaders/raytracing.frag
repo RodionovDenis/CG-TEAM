@@ -1,90 +1,90 @@
 #version 430
 
-/* Фрагментный шейдер вызывается для каждого 
-графического элемента (т.е. пикселя растрового 
-изображения, попадающего на экран). 
-Выходом фрагментного шейдера является цвет пикселя, 
-который идёт в буфер цвета. Также в фрагментном 
-шейдере выполняется вся основная часть расчёта освещения. */
+/* вЂСЂР°РіРјРµРЅС‚РЅС‹Р№ С€РµР№РґРµСЂ РІС‹Р·С‹РІР°РµС‚СЃВ¤ РґР»В¤ РєР°Р¶РґРѕРіРѕ 
+РіСЂР°С„РёС‡РµСЃРєРѕРіРѕ СЌР»РµРјРµРЅС‚Р° (С‚.Рµ. РїРёРєСЃРµР»В¤ СЂР°СЃС‚СЂРѕРІРѕРіРѕ 
+РёР·РѕР±СЂР°Р¶РµРЅРёВ¤, РїРѕРїР°РґР°СЋС‰РµРіРѕ РЅР° СЌРєСЂР°РЅ). 
+В¬С‹С…РѕРґРѕРј С„СЂР°РіРјРµРЅС‚РЅРѕРіРѕ С€РµР№РґРµСЂР° В¤РІР»В¤РµС‚СЃВ¤ С†РІРµС‚ РїРёРєСЃРµР»В¤, 
+РєРѕС‚РѕСЂС‹Р№ РёРґР„С‚ РІ Р±СѓС„РµСЂ С†РІРµС‚Р°. вЂњР°РєР¶Рµ РІ С„СЂР°РіРјРµРЅС‚РЅРѕРј 
+С€РµР№РґРµСЂРµ РІС‹РїРѕР»РЅВ¤РµС‚СЃВ¤ РІСЃВ¤ РѕСЃРЅРѕРІРЅР°В¤ С‡Р°СЃС‚СЊ СЂР°СЃС‡Р„С‚Р° РѕСЃРІРµС‰РµРЅРёВ¤. */
 
 //****************************************************//
-//                   ОБЪЯВЛЕНИЕ КОНСТАНТ              //
+//                   СњР…РЏСЏВ¬Р‹в‰€РЊВ»в‰€ В СњРЊвЂ”вЂњСРЊвЂњ              //
 //****************************************************//
 
 #define EPSILON = 0.001
-#define BIG = 1000000.0 // верхнее ограничение для расстояния
+#define BIG = 1000000.0 // РІРµСЂС…РЅРµРµ РѕРіСЂР°РЅРёС‡РµРЅРёРµ РґР»В¤ СЂР°СЃСЃС‚РѕВ¤РЅРёВ¤
 const vec3 Unit = vec3 ( 1.0, 1.0, 1.0 );
 
-/*Если луч пересекается с диффузным объектом, то вычисляется цвет объекта,
-а если с зеркальным, то создается новый зеркальный луч, который снова
-трассируется в сцену*/
+/*в‰€СЃР»Рё Р»СѓС‡ РїРµСЂРµСЃРµРєР°РµС‚СЃВ¤ СЃ РґРёС„С„СѓР·РЅС‹Рј РѕР±СЉРµРєС‚РѕРј, С‚Рѕ РІС‹С‡РёСЃР»В¤РµС‚СЃВ¤ С†РІРµС‚ РѕР±СЉРµРєС‚Р°,
+Р° РµСЃР»Рё СЃ Р·РµСЂРєР°Р»СЊРЅС‹Рј, С‚Рѕ СЃРѕР·РґР°РµС‚СЃВ¤ РЅРѕРІС‹Р№ Р·РµСЂРєР°Р»СЊРЅС‹Р№ Р»СѓС‡, РєРѕС‚РѕСЂС‹Р№ СЃРЅРѕРІР°
+С‚СЂР°СЃСЃРёСЂСѓРµС‚СЃВ¤ РІ СЃС†РµРЅСѓ*/
 
-const int DIFFUSE = 1; //диффузия
-const int REFLECTION = 2; //отражение
-const int REFRACTION = 3; //преломление
-const int DIFFUSE_REFLECTION = 1; //диффузное отражение
-const int MIRROR_REFLECTION = 2; //зеркальное отражение
+const int DIFFUSE = 1; //РґРёС„С„СѓР·РёВ¤
+const int REFLECTION = 2; //РѕС‚СЂР°Р¶РµРЅРёРµ
+const int REFRACTION = 3; //РїСЂРµР»РѕРјР»РµРЅРёРµ
+const int DIFFUSE_REFLECTION = 1; //РґРёС„С„СѓР·РЅРѕРµ РѕС‚СЂР°Р¶РµРЅРёРµ
+const int MIRROR_REFLECTION = 2; //Р·РµСЂРєР°Р»СЊРЅРѕРµ РѕС‚СЂР°Р¶РµРЅРёРµ
 
-/*Параметры стека лучей*/
+/*С•Р°СЂР°РјРµС‚СЂС‹ СЃС‚РµРєР° Р»СѓС‡РµР№*/
 
-const int MAX_STACK_SIZE = 10; //максимальный размер стека
-const int MAX_TRACE_DEPTH = 8; //максимальная глубина трассировки
-int stackSize = 0; //размер текущий
+const int MAX_STACK_SIZE = 10; //РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ СЃС‚РµРєР°
+const int MAX_TRACE_DEPTH = 8; //РјР°РєСЃРёРјР°Р»СЊРЅР°В¤ РіР»СѓР±РёРЅР° С‚СЂР°СЃСЃРёСЂРѕРІРєРё
+int stackSize = 0; //СЂР°Р·РјРµСЂ С‚РµРєСѓС‰РёР№
 
-
-//****************************************************//
-//           ВХОДНЫЕ И ВЫХОДНЫЕ ПЕРЕМЕННЫЕ            //
-//****************************************************//
-
-out vec4 FragColor; // итоговый цвет пикселя
-in vec3 glPosition; // позиция вершины
 
 //****************************************************//
-//                   СТРУКТУРЫ ДАННЫХ                 //
+//           В¬вЂ™СњЖ’РЊСџв‰€ В» В¬СџвЂ™СњЖ’РЊСџв‰€ С•в‰€вЂ“в‰€С›в‰€РЊРЊСџв‰€            //
 //****************************************************//
 
-struct SCamera //камера
+out vec4 FragColor; // РёС‚РѕРіРѕРІС‹Р№ С†РІРµС‚ РїРёРєСЃРµР»В¤
+in vec3 glPosition; // РїРѕР·РёС†РёВ¤ РІРµСЂС€РёРЅС‹
+
+//****************************************************//
+//                   вЂ”вЂњвЂ“вЂќВ вЂњвЂќвЂ“Сџ Ж’СРЊРЊСџвЂ™                 //
+//****************************************************//
+
+struct SCamera //РєР°РјРµСЂР°
 {
-	// отношение сторон выходного изображения
+	// РѕС‚РЅРѕС€РµРЅРёРµ СЃС‚РѕСЂРѕРЅ РІС‹С…РѕРґРЅРѕРіРѕ РёР·РѕР±СЂР°Р¶РµРЅРёВ¤
 	vec3 Position, View, Up, Side;
-	// масштаб
+	// РјР°СЃС€С‚Р°Р±
 	vec2 Scale;
 }; 
  
-struct SRay //луч
+struct SRay //Р»СѓС‡
 {
- 	vec3 Origin; // начало луча
-	vec3 Direction; // направление луча
+ 	vec3 Origin; // РЅР°С‡Р°Р»Рѕ Р»СѓС‡Р°
+	vec3 Direction; // РЅР°РїСЂР°РІР»РµРЅРёРµ Р»СѓС‡Р°
 }; 
  
-struct SSphere //сфера
+struct SSphere //СЃС„РµСЂР°
 {    
-	vec3 Center; // центр
-	float Radius; // радиус
-	int MaterialIdx; // материал
+	vec3 Center; // С†РµРЅС‚СЂ
+	float Radius; // СЂР°РґРёСѓСЃ
+	int MaterialIdx; // РјР°С‚РµСЂРёР°Р»
 }; 
 
-struct STriangle //треугольник
+struct STriangle //С‚СЂРµСѓРіРѕР»СЊРЅРёРє
 {     
-    vec3 v1, v2, v3; //вершины
-	int MaterialIdx; //материал
+    vec3 v1, v2, v3; //РІРµСЂС€РёРЅС‹
+	int MaterialIdx; //РјР°С‚РµСЂРёР°Р»
 };
 
-struct SMaterial //материал
+struct SMaterial //РјР°С‚РµСЂРёР°Р»
 {  
-    vec3 Color; //цвет
-	vec4 LightCoeffs;  //коэффцициенты света
-	float ReflectionCoef;  //коэффициенты отражения
-	float RefractionCoef;   //коэффициенты преломления
-	int MaterialType; //тип
+    vec3 Color; //С†РІРµС‚
+	vec4 LightCoeffs;  //РєРѕСЌС„С„С†РёС†РёРµРЅС‚С‹ СЃРІРµС‚Р°
+	float ReflectionCoef;  //РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ РѕС‚СЂР°Р¶РµРЅРёВ¤
+	float RefractionCoef;   //РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ РїСЂРµР»РѕРјР»РµРЅРёВ¤
+	int MaterialType; //С‚РёРї
 };
 
-struct SIntersection //пересечения
+struct SIntersection //РїРµСЂРµСЃРµС‡РµРЅРёВ¤
 {     
-	float Time; // время (на самом деле расстояния)
-	vec3 Point; // точка пересечения
-	vec3 Normal; // нормаль
-	vec3 Color; // цвет
+	float Time; // РІСЂРµРјВ¤ (РЅР° СЃР°РјРѕРј РґРµР»Рµ СЂР°СЃСЃС‚РѕВ¤РЅРёВ¤)
+	vec3 Point; // С‚РѕС‡РєР° РїРµСЂРµСЃРµС‡РµРЅРёВ¤
+	vec3 Normal; // РЅРѕСЂРјР°Р»СЊ
+	vec3 Color; // С†РІРµС‚
 
 	vec4 LightCoeffs;
 
@@ -93,40 +93,40 @@ struct SIntersection //пересечения
 	int MaterialType;
 };
 
-struct SLight //свет
+struct SLight //СЃРІРµС‚
 { 
-    vec3 Position; //позиция
+    vec3 Position; //РїРѕР·РёС†РёВ¤
 };
 
-struct STracingRay //трассировка
+struct STracingRay //С‚СЂР°СЃСЃРёСЂРѕРІРєР°
 { 
-    SRay ray;  //луч
-	float contribution; //вклад в результат
-	int depth; //номер переотражения
+    SRay ray;  //Р»СѓС‡
+	float contribution; //РІРєР»Р°Рґ РІ СЂРµР·СѓР»СЊС‚Р°С‚
+	int depth; //РЅРѕРјРµСЂ РїРµСЂРµРѕС‚СЂР°Р¶РµРЅРёВ¤
 };
 
 //****************************************************//
-//           ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ                    //
+//           в€љР‹СњР…СР‹в„–РЊСџв‰€ С•в‰€вЂ“в‰€С›в‰€РЊРЊСџв‰€                    //
 //****************************************************//
 
-STriangle Triangles[12]; //массив треугольников
-SSphere Spheres[3]; //массив сфер
-SMaterial Materials[8]; //материалы
-SLight uLight; //источник освещения
-SCamera uCamera; //камера
+STriangle Triangles[12]; //РјР°СЃСЃРёРІ С‚СЂРµСѓРіРѕР»СЊРЅРёРєРѕРІ
+SSphere Spheres[3]; //РјР°СЃСЃРёРІ СЃС„РµСЂ
+SMaterial Materials[8]; //РјР°С‚РµСЂРёР°Р»С‹
+SLight uLight; //РёСЃС‚РѕС‡РЅРёРє РѕСЃРІРµС‰РµРЅРёВ¤
+SCamera uCamera; //РєР°РјРµСЂР°
 
 //****************************************************//
-//                  ФУНКЦИИ                           //
+//                  вЂвЂќРЊВ Г·В»В»                           //
 //****************************************************//
 
-SRay GenerateRay ( SCamera uCamera ) //генерация луча
+SRay GenerateRay ( SCamera uCamera ) //РіРµРЅРµСЂР°С†РёВ¤ Р»СѓС‡Р°
 {  
     vec2 coords = glPosition.xy * uCamera.Scale;
 	vec3 direction = uCamera.View + uCamera.Side * coords.x + uCamera.Up * coords.y;
 	return SRay ( uCamera.Position, normalize(direction) );
 }
 
-void initializeDefaultScene (out STriangle triangles[12], out SSphere spheres[3]) // сцена по умолчанию
+void initializeDefaultScene (out STriangle triangles[12], out SSphere spheres[3]) // СЃС†РµРЅР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 {
     triangles[0].v1 = vec3(-5.0,-5.0,-8.0); 
 	triangles[0].v2 = vec3(-5.0, 5.0, 5.0); 
@@ -201,11 +201,11 @@ void initializeDefaultScene (out STriangle triangles[12], out SSphere spheres[3]
 	spheres[2].MaterialIdx = 6;
 }
 
-void initializeDefaultLightMaterials(out SLight light, out SMaterial materials[8]) //материалы по умолчанию
+void initializeDefaultLightMaterials(out SLight light, out SMaterial materials[8]) //РјР°С‚РµСЂРёР°Р»С‹ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 {
     light.Position = vec3(0.0, 2.0, -4.0f); 
 	
-    //левая стена
+    //Р»РµРІР°В¤ СЃС‚РµРЅР°
 	
     vec4 lightCoefs = vec4(0.4,0.9,0.0,512.0);    
 	materials[0].Color = vec3(1.0, 1.0, 0.0);   
@@ -214,7 +214,7 @@ void initializeDefaultLightMaterials(out SLight light, out SMaterial materials[8
 	materials[0].RefractionCoef = 1.0;  
 	materials[0].MaterialType = DIFFUSE_REFLECTION;  
  
-	//дальняя стена
+	//РґР°Р»СЊРЅВ¤В¤ СЃС‚РµРЅР°
 	
     materials[1].Color = vec3(1.0, 1.0, 1.0);  
 	materials[1].LightCoeffs = vec4(lightCoefs); 
@@ -222,7 +222,7 @@ void initializeDefaultLightMaterials(out SLight light, out SMaterial materials[8
 	materials[1].RefractionCoef = 1.0;  
 	materials[1].MaterialType = MIRROR_REFLECTION;
 	
-	//правая стена
+	//РїСЂР°РІР°В¤ СЃС‚РµРЅР°
 	
 	materials[2].Color = vec3(0.0, 0.0, 1.0);  
 	materials[2].LightCoeffs = vec4(lightCoefs); 
@@ -230,7 +230,7 @@ void initializeDefaultLightMaterials(out SLight light, out SMaterial materials[8
 	materials[2].RefractionCoef = 1.0;  
 	materials[2].MaterialType = DIFFUSE_REFLECTION;
 	
-	//верхняя стена 
+	//РІРµСЂС…РЅВ¤В¤ СЃС‚РµРЅР° 
 	
 	materials[3].Color = vec3(0.0, 1.0, 0.0);  
 	materials[3].LightCoeffs = vec4(lightCoefs); 
@@ -238,7 +238,7 @@ void initializeDefaultLightMaterials(out SLight light, out SMaterial materials[8
 	materials[3].RefractionCoef = 1.0;  
 	materials[3].MaterialType = DIFFUSE_REFLECTION;
 	
-	//нижняя стена 
+	//РЅРёР¶РЅВ¤В¤ СЃС‚РµРЅР° 
 	
 	materials[4].Color = vec3(1.0, 1.0, 1.0);  
 	materials[4].LightCoeffs = vec4(lightCoefs); 
@@ -246,7 +246,7 @@ void initializeDefaultLightMaterials(out SLight light, out SMaterial materials[8
 	materials[4].RefractionCoef = 1.0;  
 	materials[4].MaterialType = DIFFUSE_REFLECTION;
 	
-	//передняя стена
+	//РїРµСЂРµРґРЅВ¤В¤ СЃС‚РµРЅР°
 	
 	materials[5].Color = vec3(1.0, 0.0, 0.0);  
 	materials[5].LightCoeffs = vec4(lightCoefs); 
@@ -268,7 +268,7 @@ void initializeDefaultLightMaterials(out SLight light, out SMaterial materials[8
 	
 }
 
-bool IntersectSphere ( SSphere sphere, SRay ray, float start, float final, out float time ) //пересечение луча со сферой
+bool IntersectSphere ( SSphere sphere, SRay ray, float start, float final, out float time ) //РїРµСЂРµСЃРµС‡РµРЅРёРµ Р»СѓС‡Р° СЃРѕ СЃС„РµСЂРѕР№
 {     
     ray.Origin -= sphere.Center;  
 	float A = dot ( ray.Direction, ray.Direction );  
@@ -292,7 +292,7 @@ bool IntersectSphere ( SSphere sphere, SRay ray, float start, float final, out f
 	return false; 
 }
 
-bool IntersectTriangle (SRay ray, vec3 v1, vec3 v2, vec3 v3, out float time ) //пересечение луча с треугольником
+bool IntersectTriangle (SRay ray, vec3 v1, vec3 v2, vec3 v3, out float time ) //РїРµСЂРµСЃРµС‡РµРЅРёРµ Р»СѓС‡Р° СЃ С‚СЂРµСѓРіРѕР»СЊРЅРёРєРѕРј
 {
     time = -1; 
 	vec3 A = v2 - v1; 
@@ -321,7 +321,7 @@ bool IntersectTriangle (SRay ray, vec3 v1, vec3 v2, vec3 v3, out float time ) //
 	return true; 
 }
 
-bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect ) //функция, трассирующая луч
+bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect ) //С„СѓРЅРєС†РёВ¤, С‚СЂР°СЃСЃРёСЂСѓСЋС‰Р°В¤ Р»СѓС‡
 { 
     bool result = false; 
 	float test = start; 
@@ -380,7 +380,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	return result;
 } 
 
-vec3 Phong ( SIntersection intersect, SLight currLight, float shadowing) //освещение по Фонгу
+vec3 Phong ( SIntersection intersect, SLight currLight, float shadowing) //РѕСЃРІРµС‰РµРЅРёРµ РїРѕ вЂРѕРЅРіСѓ
 {
     vec3 light = normalize ( currLight.Position - intersect.Point ); 
     float diffuse = max(dot(light, intersect.Normal), 0.0);   
@@ -392,7 +392,7 @@ vec3 Phong ( SIntersection intersect, SLight currLight, float shadowing) //освещ
 		   intersect.LightCoeffs.z * specular * Unit;
 } 
 
-float Shadow(SLight currLight, SIntersection intersect) //теневые лучи
+float Shadow(SLight currLight, SIntersection intersect) //С‚РµРЅРµРІС‹Рµ Р»СѓС‡Рё
 {     
     float shadowing = 1.0;  
 	vec3 direction = normalize(currLight.Position - intersect.Point);   
@@ -407,9 +407,9 @@ float Shadow(SLight currLight, SIntersection intersect) //теневые лучи
 	return shadowing; 
 }
 
-STracingRay stack[MAX_STACK_SIZE]; //стек
+STracingRay stack[MAX_STACK_SIZE]; //СЃС‚РµРє
 
-bool push(STracingRay secondaryRay) //положить в стек
+bool push(STracingRay secondaryRay) //РїРѕР»РѕР¶РёС‚СЊ РІ СЃС‚РµРє
 {
 	if(stackSize < MAX_STACK_SIZE - 1 && secondaryRay.depth < MAX_TRACE_DEPTH)
 	{
@@ -420,14 +420,14 @@ bool push(STracingRay secondaryRay) //положить в стек
 	return false;
 }
 
-bool isEmpty() //проверка на пустоту
+bool isEmpty() //РїСЂРѕРІРµСЂРєР° РЅР° РїСѓСЃС‚РѕС‚Сѓ
 {
 	if(stackSize < 0)
 		return true;
 	return false;
 }
 
-STracingRay pop() //взять из стека
+STracingRay pop() //РІР·В¤С‚СЊ РёР· СЃС‚РµРєР°
 {
 	stackSize--;
 	return stack[stackSize];	
@@ -438,7 +438,7 @@ void main ( void )
     float start = 0;   
 	float final = 1000000.0;
 	
-	//настройка камеры
+	//РЅР°СЃС‚СЂРѕР№РєР° РєР°РјРµСЂС‹
 	
 	uCamera.Position = vec3(0.0, 0.0, -4.0);
     uCamera.View = vec3(0.0, 0.0, 1.0); 
@@ -446,7 +446,7 @@ void main ( void )
 	uCamera.Side = vec3(1.0, 0.0, 0.0); 
 	uCamera.Scale = vec2(1.0); 
 	
-	//луч
+	//Р»СѓС‡
 	SRay ray = GenerateRay( uCamera);
 	
 	SIntersection intersect;        
