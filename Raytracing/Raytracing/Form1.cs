@@ -25,6 +25,10 @@ namespace OpenGL
         int BasicVertexShader; // Адрес вершинного шейдера  
         int BasicFragmentShader; // Адрес фрагментного шейдера
 
+        float R = 0.1f; //интенсивность красного
+        float G = 0.1f; //интенсивность зеленого
+        float B = 0.9f; //интенсивность синего
+
         private void InitShaders()
         {
             //создание объекта программы
@@ -83,6 +87,8 @@ namespace OpenGL
             index = GL.GetUniformLocation(BasicProgramID, "uLight.Position");
             GL.Uniform3(index, new Vector3(2.0f, 0.0f, -4.0f));
 
+            UpdateUniforms();
+
             // Квадрат
             GL.Color3(Color.White);
             GL.Begin(PrimitiveType.Quads);
@@ -111,6 +117,38 @@ namespace OpenGL
         private void glControl1_Load(object sender, EventArgs e)
         {
             InitShaders(); //собираем код шейдеров
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+            //компонента R
+            R = trackBar1.Value / 10.0f;
+            Draw();
+        }
+
+        private void trackBar3_Scroll(object sender, EventArgs e)
+        {
+            //компонента G
+            G = trackBar3.Value / 10.0f;
+            Draw();
+        }
+
+        private void trackBar2_Scroll(object sender, EventArgs e)
+        {
+            //компонента B
+            B = trackBar2.Value / 10.0f;
+            Draw();
+        }
+        public void UpdateUniforms()
+        {
+            GL.Uniform1(GL.GetUniformLocation(BasicProgramID, "R"), R); //придали значение R
+            GL.Uniform1(GL.GetUniformLocation(BasicProgramID, "G"), G); //придали значение G
+            GL.Uniform1(GL.GetUniformLocation(BasicProgramID, "B"), B); //придали значение B
         }
     } 
 }

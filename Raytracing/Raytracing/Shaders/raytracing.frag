@@ -70,6 +70,12 @@ struct STriangle //треугольник
 	int MaterialIdx; //материал
 };
 
+struct SCube //куб
+{
+	STriangle bounds[12]; //12 треугольков - куб
+	int MaterialIdx; // материал
+};
+
 struct SMaterial //материал
 {  
     vec3 Color; //цвет
@@ -112,8 +118,17 @@ struct STracingRay //трассировка
 STriangle Triangles[12]; //массив треугольников
 SSphere Spheres[3]; //массив сфер
 SMaterial Materials[8]; //материалы
+SCube cube; 
 SLight uLight; //источник освещения
 SCamera uCamera; //камера
+
+//юниформные переменные для изменения цвета куба
+
+uniform float R;
+uniform float G;
+uniform float B;
+
+vec3 ColorCube = vec3(R,G,B);
 
 //****************************************************//
 //                  ФУНКЦИИ                           //
@@ -126,7 +141,7 @@ SRay GenerateRay ( SCamera uCamera ) //генерация луча
 	return SRay ( uCamera.Position, normalize(direction) );
 }
 
-void initializeDefaultScene (out STriangle triangles[12], out SSphere spheres[3]) // сцена по умолчанию
+void initializeDefaultScene (out STriangle triangles[12], out SSphere spheres[3], out SCube cube) // сцена по умолчанию
 {
     triangles[0].v1 = vec3(-5.0,-5.0,-8.0); 
 	triangles[0].v2 = vec3(-5.0, 5.0, 5.0); 
@@ -188,17 +203,69 @@ void initializeDefaultScene (out STriangle triangles[12], out SSphere spheres[3]
 	triangles[11].v3 = vec3(-5.0, -5.0, -8.0); 
 	triangles[11].MaterialIdx = 5;
 	
-	spheres[0].Center = vec3(1.0,0.0,1.0);  
-	spheres[0].Radius = 0.5;  
+	spheres[0].Center = vec3(0.0,1.0,1.0);  
+	spheres[0].Radius = 0.2;  
 	spheres[0].MaterialIdx = 6; 
  
     spheres[1].Center = vec3(-2.0,1.0,1.0);  
 	spheres[1].Radius = 1;  
 	spheres[1].MaterialIdx = 6;
 	
-	spheres[2].Center = vec3(0.0,-2.0,-0.7);  
+	spheres[2].Center = vec3(-1,-2.0,-0.7);  
 	spheres[2].Radius = 0.3;  
 	spheres[2].MaterialIdx = 6;
+	
+	//задаем куб
+	
+	cube.bounds[0].v1 = vec3(1.0,1.0,1.0);
+	cube.bounds[0].v2 = vec3(1.5,1.0,1.0);
+	cube.bounds[0].v3 = vec3(1.0,1.5,1.0);
+	
+	cube.bounds[1].v1 = vec3(1.5,1.5,1.0);
+	cube.bounds[1].v2 = vec3(1.5,1.0,1.0);
+	cube.bounds[1].v3 = vec3(1.0,1.5,1.0);
+	
+	cube.bounds[2].v1 = vec3(1.0,1.0,1.5);
+	cube.bounds[2].v2 = vec3(1.5,1.0,1.5);
+	cube.bounds[2].v3 = vec3(1.0,1.5,1.5);
+	
+	cube.bounds[3].v1 = vec3(1.5,1.5,1.5);
+	cube.bounds[3].v2 = vec3(1.5,1.0,1.5);
+	cube.bounds[3].v3 = vec3(1.0,1.5,1.5);
+	
+	cube.bounds[4].v1 = vec3(1.0,1.5,1.0);
+	cube.bounds[4].v2 = vec3(1.5,1.5,1.5);
+	cube.bounds[4].v3 = vec3(1.5,1.5,1.0);
+	
+	cube.bounds[5].v1 = vec3(1.5,1.5,1.5);
+	cube.bounds[5].v2 = vec3(1.5,1.5,1.0);
+	cube.bounds[5].v3 = vec3(1.0,1.5,1.5);
+	
+	cube.bounds[6].v1 = vec3(1.0,1.0,1.0);
+	cube.bounds[6].v2 = vec3(1.5,1.0,1.5);
+	cube.bounds[6].v3 = vec3(1.5,1.0,1.0);
+	
+	cube.bounds[7].v1 = vec3(1.5,1.0,1.5);
+	cube.bounds[7].v2 = vec3(1.5,1.0,1.0);
+	cube.bounds[7].v3 = vec3(1.0,1.0,1.5);
+	
+	cube.bounds[8].v1 = vec3(1.0,1.0,1.0);
+	cube.bounds[8].v2 = vec3(1.0,1.5,1.0);
+	cube.bounds[8].v3 = vec3(1.0,1.0,1.5);
+	
+	cube.bounds[9].v1 = vec3(1.0,1.5,1.5);
+	cube.bounds[9].v2 = vec3(1.0,1.5,1.0);
+	cube.bounds[9].v3 = vec3(1.0,1.0,1.5);
+	
+	cube.bounds[10].v1 = vec3(1.5,1.0,1.0);
+	cube.bounds[10].v2 = vec3(1.5,1.5,1.0);
+	cube.bounds[10].v3 = vec3(1.5,1.0,1.5);
+	
+	cube.bounds[11].v1 = vec3(1.5,1.5,1.5);
+	cube.bounds[11].v2 = vec3(1.5,1.5,1.0);
+	cube.bounds[11].v3 = vec3(1.5,1.0,1.5);
+	
+	
 }
 
 void initializeDefaultLightMaterials(out SLight light, out SMaterial materials[8]) //материалы по умолчанию
@@ -321,6 +388,8 @@ bool IntersectTriangle (SRay ray, vec3 v1, vec3 v2, vec3 v3, out float time ) //
 	return true; 
 }
 
+
+
 bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect ) //функция, трассирующая луч
 { 
     bool result = false; 
@@ -376,7 +445,26 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		intersect.RefractionCoef = mat.RefractionCoef;       
 		intersect.MaterialType =   mat.MaterialType;  
 		result = true;    
-	    }
+	}
+	for(int i = 0; i < 12; i++) 
+	{
+	    STriangle triangle = cube.bounds[i]; 
+	    if(IntersectTriangle(ray, triangle.v1, triangle.v2, triangle.v3, test) && test < intersect.Time)
+	    {        
+    	    intersect.Time = test;  
+			intersect.Point = ray.Origin + ray.Direction * test;  
+			intersect.Normal =               
+			normalize(cross(triangle.v1 - triangle.v2, triangle.v3 - triangle.v2));
+			SMaterial mat = Materials[7];
+			intersect.Color = ColorCube;    
+			intersect.LightCoeffs = mat.LightCoeffs;
+			intersect.ReflectionCoef = mat.ReflectionCoef;       
+			intersect.RefractionCoef = mat.RefractionCoef;       
+			intersect.MaterialType = mat.MaterialType;       
+			result = true;   
+		} 
+	}
+
 	return result;
 } 
 
@@ -454,7 +542,7 @@ void main ( void )
     
 	vec3 resultColor = vec3(0,0,0);
 	initializeDefaultLightMaterials(uLight, Materials);
-    initializeDefaultScene(Triangles, Spheres);	
+    initializeDefaultScene(Triangles, Spheres, cube);	
 	STracingRay trRay = STracingRay(ray, 1, 0); 
 	push(trRay); 
 	while(!isEmpty()) 
