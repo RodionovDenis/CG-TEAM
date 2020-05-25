@@ -128,6 +128,10 @@ uniform float R;
 uniform float G;
 uniform float B;
 
+//юниформная переменная для изменения глубины рейтресинга
+
+uniform int deep;
+
 vec3 ColorCube = vec3(R,G,B);
 
 //****************************************************//
@@ -543,7 +547,7 @@ void main ( void )
 	vec3 resultColor = vec3(0,0,0);
 	initializeDefaultLightMaterials(uLight, Materials);
     initializeDefaultScene(Triangles, Spheres, cube);	
-	STracingRay trRay = STracingRay(ray, 1, 0); 
+	STracingRay trRay = STracingRay(ray, 1, deep); 
 	push(trRay); 
 	while(!isEmpty()) 
 	{     

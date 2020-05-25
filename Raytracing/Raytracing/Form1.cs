@@ -29,6 +29,8 @@ namespace OpenGL
         float G = 0.1f; //интенсивность зеленого
         float B = 0.9f; //интенсивность синего
 
+        int deep = 0; //изменение трассировки лучей
+
         private void InitShaders()
         {
             //создание объекта программы
@@ -149,6 +151,13 @@ namespace OpenGL
             GL.Uniform1(GL.GetUniformLocation(BasicProgramID, "R"), R); //придали значение R
             GL.Uniform1(GL.GetUniformLocation(BasicProgramID, "G"), G); //придали значение G
             GL.Uniform1(GL.GetUniformLocation(BasicProgramID, "B"), B); //придали значение B
+            GL.Uniform1(GL.GetUniformLocation(BasicProgramID, "deep"), deep); //придали значение deep
+        }
+
+        private void trackBar4_Scroll(object sender, EventArgs e)
+        {
+            deep = trackBar4.Value;
+            Draw();
         }
     } 
 }
