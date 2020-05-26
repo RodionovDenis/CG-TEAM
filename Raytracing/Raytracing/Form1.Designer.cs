@@ -148,10 +148,11 @@
             // 
             // trackBar4
             // 
-            this.trackBar4.Location = new System.Drawing.Point(366, 32);
+            this.trackBar4.Location = new System.Drawing.Point(357, 32);
             this.trackBar4.Name = "trackBar4";
             this.trackBar4.Size = new System.Drawing.Size(275, 45);
             this.trackBar4.TabIndex = 9;
+            this.trackBar4.Value = 10;
             this.trackBar4.Scroll += new System.EventHandler(this.trackBar4_Scroll);
             // 
             // Form1

@@ -156,7 +156,7 @@ namespace OpenGL
 
         private void trackBar4_Scroll(object sender, EventArgs e)
         {
-            deep = trackBar4.Value;
+            deep = Convert.ToInt32(trackBar4.Value);
             Draw();
         }
     } 

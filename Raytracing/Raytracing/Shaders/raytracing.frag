@@ -547,7 +547,7 @@ void main ( void )
 	vec3 resultColor = vec3(0,0,0);
 	initializeDefaultLightMaterials(uLight, Materials);
     initializeDefaultScene(Triangles, Spheres, cube);	
-	STracingRay trRay = STracingRay(ray, 1, deep); 
+	STracingRay trRay = STracingRay(ray, 1, 0); 
 	push(trRay); 
 	while(!isEmpty()) 
 	{     
@@ -576,8 +576,11 @@ void main ( void )
 				    }  
 				    vec3 reflectDirection = reflect(ray.Direction, intersect.Normal);
 				    float contribution = trRay.contribution * intersect.ReflectionCoef;  
-				    STracingRay reflectRay = STracingRay( SRay(intersect.Point + reflectDirection * 0.001, reflectDirection), contribution, trRay.depth + 1);    
-				    push(reflectRay);  
+					if(trRay.depth + 1 < deep)
+					{
+						STracingRay reflectRay = STracingRay( SRay(intersect.Point + reflectDirection * 0.001, reflectDirection), contribution, trRay.depth + 1);    
+						push(reflectRay);  
+					}
 				    break;  
 			    }     
 			}  
